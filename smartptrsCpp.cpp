@@ -1,4 +1,5 @@
 ﻿#include <iostream>
+#include <cstddef>
 
 namespace smart_pointers {
 	template<typename T, typename D = std::default_delete<T>>
@@ -8,7 +9,7 @@ namespace smart_pointers {
 		typedef D _deleter_type;
 		typedef unique_ptr<T, D> uniq;
 		typedef T* pointer;
-		explicit unique_ptr(_val_type* data)
+		explicit unique_ptr(pointer data)
 			: _ptr(data)
 		{
 
@@ -57,13 +58,116 @@ namespace smart_pointers {
 		_val_type& operator*() const {
 			return *_ptr;
 		}
-		operator bool() const {
+		explicit operator bool() const {
 			return _ptr != nullptr;
 		}
 	private:
 		pointer _ptr;
 		_deleter_type _def_del;
 	};
+
+	template<typename T, typename D = std::default_delete<T>>
+	class shared_ptr {
+	public:
+		typedef T _val_type;
+		typedef D _deleter_type;
+		typedef shared_ptr<T, D> shared;
+		typedef T* pointer;
+		typedef size_t* counterType;
+		typedef size_t size_type;
+		constexpr shared_ptr() noexcept
+			:_ptr(nullptr),
+			_count(nullptr)
+		{
+
+		}
+		constexpr shared_ptr(std::nullptr_t nuptr)
+			: _ptr(nullptr),
+			_count(new size_t(0))
+		{
+
+		}
+		explicit shared_ptr(pointer p)
+			: _ptr(p),
+			_count(new size_t(1))
+		{
+			
+		}
+		shared_ptr(const shared& rhs) noexcept {
+			if (rhs._count != nullptr && rhs._ptr != nullptr) {
+				_count = rhs._count;
+				(*_count)++;
+				_ptr = rhs._ptr;
+			}
+			else {
+				_ptr = nullptr;
+				_count = nullptr;
+			}
+		}
+		~shared_ptr() {
+			if (!unique()) {
+				(*_count)--;
+				_ptr = nullptr;
+			}
+			else if (unique()) {
+				_def_del(_ptr);
+				std::default_delete<size_t>(_count);
+			}
+			else if ((*_count) == 0) {
+				_ptr = nullptr;
+			}
+		}
+		shared& operator=(const shared& rhs) noexcept {
+			if (unique()) {
+				_def_del(_ptr);
+				std::default_delete<size_t>(_count);
+			}
+			else {
+				(*_count)--;
+			}
+			if (rhs._count != nullptr && rhs._ptr != nullptr) {
+				_count = rhs._count;
+				(*_count)++;
+				_ptr = rhs._ptr;
+			}
+			else {
+				_ptr = nullptr;
+				_count = nullptr;
+			}
+		}
+		pointer get() const noexcept {
+			return _ptr;
+		}
+		explicit operator bool() const noexcept {
+			return _ptr != nullptr;
+		}
+		pointer operator->() const noexcept {
+			return _ptr;
+		}
+		bool unique() const noexcept {
+			return (_count != nullptr && _ptr != nullptr) && ((*(_count)) == 1);
+		}
+		size_type use_count() const noexcept {
+			return (*_count == nullptr ? 0 : *_count);
+		}
+		void reset() noexcept {
+			if (unique()) {
+				_def_del(_ptr);
+				std::default_delete<size_t>(_count);
+			}
+			else if (_count != nullptr && _ptr != nullptr) {
+				(*_count)--;
+			}
+			_count = nullptr;
+			_ptr = nullptr;
+		}
+	private:
+		counterType _count;
+		_deleter_type _def_del;
+		pointer _ptr;
+	
+	};
+
 };
 
 int main()
