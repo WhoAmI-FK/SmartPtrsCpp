@@ -165,13 +165,28 @@ namespace smart_pointers {
 		counterType _count;
 		_deleter_type _def_del;
 		pointer _ptr;
-	
+		template<typename T, typename D>
+		friend class weak_ptr;
 	};
 
+	
+	template<typename T, typename D = std::default_delete<T>>
+	class weak_ptr {
+	public:
+		typedef T _val_type;
+		typedef D _deleter_type;
+		typedef weak_ptr<T, D> weak;
+		typedef T* pointer;
+		weak_ptr() = default;
+
+	private:
+
+	};
 };
 
 int main()
 {
-	// code
+	std::atomic<int> val = 0;
+	std::cout << val;
 	return 0;
 }
