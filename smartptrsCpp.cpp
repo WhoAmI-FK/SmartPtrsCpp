@@ -66,6 +66,27 @@ namespace smart_pointers {
 		_deleter_type _def_del;
 	};
 
+	template<typename T> 
+	struct _Unique_if {
+		typedef unique_ptr<T> _object;
+	};
+
+	// to add array variation of unique_ptr
+	template<typename T> 
+	struct _Unique_if<T[]> {
+		typedef unique_ptr<T[]> _Unknown_bound;
+	};
+	template<typename T, size_t N>
+	struct _Unique_if<T[N]> {
+		typedef void _Known_bound;
+	};
+
+	template<typename T, typename... Args>
+	typename _Unique_if<T>::_object
+		make_unique(Args&&... args) {
+		return unique_ptr<T>(new T(std::forward<Args>(args)...));
+	}
+
 	template<typename T, typename D = std::default_delete<T>>
 	class shared_ptr {
 	public:
@@ -186,7 +207,6 @@ namespace smart_pointers {
 
 int main()
 {
-	std::atomic<int> val = 0;
-	std::cout << val;
+	smart_pointers::unique_ptr<int> mptr = smart_pointers::make_unique<int>();
 	return 0;
 }
